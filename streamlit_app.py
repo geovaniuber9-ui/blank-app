@@ -3,15 +3,18 @@ import pandas as pd
 import plotly.express as px
 
 # 1. CONFIGURAÇÃO DE PÁGINA
-st.set_page_config(page_title="GS Consultoria Eco", page_icon="🌱", layout="wide")
+st.set_page_config(page_title="GS Consultoria - Login Rápido", page_icon="🌱", layout="wide")
 
-# 2. ESTILO VISUAL (AMBIENTE VERDE CLARO)
+# --- ACESSO RÁPIDO SOLICITADO ---
+USUARIO_CORRETO = "1"
+SENHA_CORRETA = "1"
+
+# 2. ESTILO VISUAL ECO (VERDE CLARO)
 st.markdown("""
     <style>
     .stApp { background-color: #E8F5E9 !important; color: #1B5E20; }
     .card-trabalho {
-        background: #FFFFFF;
-        border: 2px solid #2E7D32;
+        background: #FFFFFF; border: 2px solid #2E7D32;
         padding: 15px; border-radius: 12px; margin-bottom: 15px;
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
@@ -23,23 +26,55 @@ st.markdown("""
         color: white; border-radius: 10px; font-weight: bold; height: 3.5em; width: 100%;
         border: none;
     }
+    .login-box {
+        background: white; padding: 30px; border-radius: 15px;
+        border: 2px solid #4CAF50; text-align: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. LÓGICA DE DADOS
+# 3. CONTROLE DE SESSÃO
+if 'logado' not in st.session_state:
+    st.session_state.logado = False
+
+# --- TELA DE LOGIN ---
+if not st.session_state.logado:
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+        st.header("GS Consultoria 🌱")
+        st.subheader("Acesso Restrito")
+        
+        user = st.text_input("Usuário (Dica: 1)")
+        password = st.text_input("Senha (Dica: 1)", type="password")
+        
+        if st.button("ENTRAR"):
+            if user == USUARIO_CORRETO and password == SENHA_CORRETA:
+                st.session_state.logado = True
+                st.rerun()
+            else:
+                st.error("Dados incorretos!")
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+# --- ÁREA LOGADA (SÓ APARECE APÓS LOGIN 1/1) ---
+
 if 'ganhos' not in st.session_state: st.session_state.ganhos = 0.0
 if 'status' not in st.session_state: st.session_state.status = "mural"
 
-# --- SIDEBAR ---
+# SIDEBAR
 with st.sidebar:
     st.title("👤 Geovani Santi")
-    st.metric("Ganhos do Dia", f"R$ {st.session_state.ganhos:.2f}")
+    if st.button("SAIR"):
+        st.session_state.logado = False
+        st.rerun()
+    st.metric("Ganhos Atuais", f"R$ {st.session_state.ganhos:.2f}")
     df_hist = pd.DataFrame({"Hora": ["12h", "14h", "16h", "Agora"], "R$": [50, 120, 80, st.session_state.ganhos]})
     fig = px.area(df_hist, x="Hora", y="R$", title="Fluxo de Caixa 🌱")
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="#1B5E20", height=200)
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MURAL DE MISSÕES (5 POR CATEGORIA - 25 NO TOTAL) ---
+# MURAL DE MISSÕES (25 OPÇÕES)
 if st.session_state.status == "mural":
     st.title("🌱 Radar GS - Osasco")
     t1, t2, t3, t4, t5 = st.tabs(["🧹 Zeladoria", "🏥 Saúde", "♻️ Resíduos", "🌳 Jardinagem", "🎪 Logística"])
@@ -72,12 +107,12 @@ if st.session_state.status == "mural":
 
 elif st.session_state.status == "gps":
     st.header(f"🧭 Rota: {st.session_state.missao['local']}")
-    st.success("Caminho verde calculado! Toque no botão abaixo ao chegar.")
+    st.success("GPS Ativado!")
     if st.button("✅ CHEGUEI NO LOCAL"):
         st.session_state.status = "fotos"; st.rerun()
 
 elif st.session_state.status == "fotos":
-    st.header("📸 Validação Eco")
+    st.header("📸 Validação")
     st.camera_input("🤳 Selfie para Validação", key="selfie")
     if st.button("🏁 TRABALHO CONCLUÍDO 🌱"):
         st.session_state.ganhos += st.session_state.missao['valor']
