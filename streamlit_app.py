@@ -3,15 +3,12 @@ import pandas as pd
 import plotly.express as px
 
 # 1. CONFIGURAÇÃO DE PÁGINA
-st.set_page_config(page_title="GS Consultoria V31 - Eco", page_icon="🌱", layout="wide")
+st.set_page_config(page_title="GS Consultoria Eco", page_icon="🌱", layout="wide")
 
 # 2. ESTILO VISUAL (AMBIENTE VERDE CLARO)
 st.markdown("""
     <style>
-    /* FUNDO VERDE CLARO ECO */
     .stApp { background-color: #E8F5E9 !important; color: #1B5E20; }
-    
-    /* CARDS BRANCOS COM BORDA VERDE */
     .card-trabalho {
         background: #FFFFFF;
         border: 2px solid #2E7D32;
@@ -21,38 +18,68 @@ st.markdown("""
     .titulo-card { color: #1B5E20; font-size: 18px; font-weight: bold; }
     .valor { color: #388E3C; font-size: 22px; font-weight: bold; }
     .local { color: #FFA000; font-weight: bold; }
-    
-    /* BOTÕES VERDE FLORESTA */
     .stButton>button {
         background: linear-gradient(90deg, #4CAF50, #2E7D32);
         color: white; border-radius: 10px; font-weight: bold; height: 3.5em; width: 100%;
         border: none;
     }
-    .stTabs [data-baseweb="tab-list"] button { font-size: 14px; color: #2E7D32; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. BANCO DE DADOS DE MISSÕES (MUITAS OPÇÕES)
+# 3. LÓGICA DE DADOS
 if 'ganhos' not in st.session_state: st.session_state.ganhos = 0.0
 if 'status' not in st.session_state: st.session_state.status = "mural"
 
-# --- SIDEBAR ECOLÓGICA ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.title("👤 Geovani Santi")
-    st.metric("Ganhos Sustentáveis", f"R$ {st.session_state.ganhos:.2f}")
+    st.metric("Ganhos do Dia", f"R$ {st.session_state.ganhos:.2f}")
     df_hist = pd.DataFrame({"Hora": ["12h", "14h", "16h", "Agora"], "R$": [50, 120, 80, st.session_state.ganhos]})
     fig = px.area(df_hist, x="Hora", y="R$", title="Fluxo de Caixa 🌱")
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="#1B5E20", height=200)
     st.plotly_chart(fig, use_container_width=True)
 
-# --- MURAL DE MISSÕES EXPANDIDO (TODAS CATEGORIAS COM 5 OPÇÕES) ---
+# --- MURAL DE MISSÕES (5 POR CATEGORIA - 25 NO TOTAL) ---
 if st.session_state.status == "mural":
-    st.title("🌱 Radar de Missões Ecológicas - Osasco")
-    t1, t2, t3, t4, t5 = st.tabs(["🧹 Zeladoria", "🏥 Saúde", "♻️ Resíduos", "🌱 Jardinagem", "🎪 Logística"])
+    st.title("🌱 Radar GS - Osasco")
+    t1, t2, t3, t4, t5 = st.tabs(["🧹 Zeladoria", "🏥 Saúde", "♻️ Resíduos", "🌳 Jardinagem", "🎪 Logística"])
     
-    # 🧹 ZELADORIA (5 OPÇÕES)
+    def criar_card(titulo, valor, local, chave):
+        st.markdown(f'<div class="card-trabalho"><span class="titulo-card">{titulo}</span><br><span class="local">📍 {local}</span><br><span class="valor">R$ {valor:.2f}</span></div>', unsafe_allow_html=True)
+        if st.button(f"ACEITAR: {titulo.upper()}", key=chave):
+            st.session_state.missao = {"nome": titulo, "valor": valor, "local": local}
+            st.session_state.status = "gps"; st.rerun()
+
     with t1:
-        missoes_zeladoria = [
-            ("Varrição de Vias Pública", 55.0, "Centro"),
-            ("Pintura de Meio-Fio
-             
+        dados = [("Varrição de Vias", 55.0, "Centro"), ("Pintura de Meio-Fio", 85.0, "Bela Vista"), ("Limpeza de Bueiro", 75.0, "Rochdale"), ("Manutenção de Guia", 90.0, "Vila Yara"), ("Zeladoria Praça", 100.0, "Ayrosa")]
+        for i, d in enumerate(dados): criar_card(d[0], d[1], d[2], f"z{i}")
+
+    with t2:
+        dados = [("Acompanhante Hosp.", 150.0, "Centro"), ("Cuidador Idoso", 200.0, "Campesina"), ("Instrumentador", 300.0, "Vila Yara"), ("Exames", 120.0, "Km 18"), ("Pós-Cirúrgico", 220.0, "Saúde")]
+        for i, d in enumerate(dados): criar_card(d[0], d[1], d[2], f"s{i}")
+
+    with t3:
+        dados = [("Triagem Manual", 70.0, "Mutinga"), ("Coleta Seletiva", 65.0, "Industrial"), ("Triturador", 100.0, "Rochdale"), ("Resíduos Ind.", 150.0, "Km 18"), ("Triagem Vidro", 80.0, "Centro")]
+        for i, d in enumerate(dados): criar_card(d[0], d[1], d[2], f"r{i}")
+
+    with t4:
+        dados = [("Roçagem Grama", 110.0, "Vila Yara"), ("Poda Árvore", 140.0, "Centro"), ("Poda Arbusto", 95.0, "Campesina"), ("Limpeza Jardim", 80.0, "Ayrosa"), ("Instalação Grama", 130.0, "Industrial")]
+        for i, d in enumerate(dados): criar_card(d[0], d[1], d[2], f"j{i}")
+
+    with t5:
+        dados = [("Montagem Palco", 180.0, "Arena"), ("Instalação Cercas", 130.0, "Centro"), ("Empilhadeira", 200.0, "Industrial"), ("Carga/Descarga", 110.0, "Km 18"), ("Montagem Tendas", 140.0, "Vila Yara")]
+        for i, d in enumerate(dados): criar_card(d[0], d[1], d[2], f"l{i}")
+
+elif st.session_state.status == "gps":
+    st.header(f"🧭 Rota: {st.session_state.missao['local']}")
+    st.success("Caminho verde calculado! Toque no botão abaixo ao chegar.")
+    if st.button("✅ CHEGUEI NO LOCAL"):
+        st.session_state.status = "fotos"; st.rerun()
+
+elif st.session_state.status == "fotos":
+    st.header("📸 Validação Eco")
+    st.camera_input("🤳 Selfie para Validação", key="selfie")
+    if st.button("🏁 TRABALHO CONCLUÍDO 🌱"):
+        st.session_state.ganhos += st.session_state.missao['valor']
+        st.session_state.status = "mural"; st.rerun()
+    
