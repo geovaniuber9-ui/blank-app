@@ -1,106 +1,86 @@
 import streamlit as st
+import pandas as pd
 import time
 
-# CONFIGURAÇÃO VISUAL GS CONSULTORIA
-st.set_page_config(page_title="LuzSocial - Uber da Cidadania", page_icon="⚡", layout="centered")
+# CONFIGURAÇÃO DA PÁGINA GS CONSULTORIA
+st.set_page_config(page_title="LuzSocial v3.0", page_icon="⚡", layout="centered")
 
-# ESTILO CSS PARA DEIXAR COM CARA DE APLICATIVO PROFISSIONAL
+# ESTILO PARA PARECER APLICATIVO
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stButton>button { border-radius: 20px; height: 3.5em; font-weight: bold; width: 100%; border: none; }
-    .btn-gov { background-color: #1A237E; color: white; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; border: 1px solid #cfd8dc; }
-    .card-missao { background-color: white; padding: 25px; border-radius: 20px; border-left: 10px solid #00E676; margin-bottom: 20px; box-shadow: 0px 4px 15px rgba(0,0,0,0.1); color: #333; }
-    .status-badge { background-color: #e8f5e9; color: #2e7d32; padding: 5px 15px; border-radius: 50px; font-size: 14px; font-weight: bold; }
+    .main { background-color: #f8f9fa; }
+    .card { background-color: white; padding: 20px; border-radius: 15px; border-left: 8px solid #1A237E; margin-bottom: 15px; box-shadow: 0px 2px 10px rgba(0,0,0,0.05); }
+    .stButton>button { border-radius: 20px; height: 3em; width: 100%; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# GERENCIAMENTO DE ESTADO DO APP
 if 'status' not in st.session_state: st.session_state.status = "login"
 if 'saldo' not in st.session_state: st.session_state.saldo = 0.0
 
 # --- TELA DE LOGIN ---
 if st.session_state.status == "login":
-    st.image("https://via.placeholder.com/150x50.png?text=GS+CONSULTORIA", width=180)
     st.title("⚡ LuzSocial")
-    st.subheader("Trabalho, Dignidade e Pagamento Instantâneo")
-    
+    st.write("### Trabalho e Dignidade Instantânea")
     user = st.text_input("CPF ou Usuário")
     senha = st.text_input("Senha", type="password")
-    
-    if st.button("ENTRAR NO SISTEMA"):
-        if user and senha:
-            st.session_state.status = "menu"
-            st.rerun()
-        else:
-            st.error("Por favor, preencha os campos.")
-            
-    st.markdown('<div class="btn-gov">🏛️ ENTRAR COM GOV.BR</div>', unsafe_allow_html=True)
+    if st.button("ENTRAR NO PAINEL"):
+        st.session_state.status = "menu"
+        st.rerun()
 
-# --- MENU DE MISSÕES (ESTILO UBER) ---
+# --- MENU DE CATEGORIAS ---
 elif st.session_state.status == "menu":
-    st.sidebar.title("Olá, Geovani!")
-    st.sidebar.metric("Sua Carteira", f"R$ {st.session_state.saldo:.2f}")
+    st.title("📂 Categorias de Serviço")
     
-    st.header("📍 Mural de Missões")
-    st.write("Escolha uma atividade próxima para começar:")
+    escolha = st.radio("Selecione o tipo de trabalho:", 
+                      ["Zeladoria Urbana (Limpeza de Praças/Ruas)", 
+                       "Serviços Domésticos (Cozinheira/Diarista)", 
+                       "Serviço Comunitário"])
+
+    st.divider()
+
+    if "Zeladoria" in escolha:
+        st.markdown('<div class="card"><h3>Varrer Praça da Matriz</h3><p>Osasco - Centro</p><h2>R$ 25,00</h2></div>', unsafe_allow_html=True)
+        if st.button("VER MAPA E INICIAR"):
+            st.session_state.status = "mapa"
+            st.rerun()
+    else:
+        st.info(f"Buscando vagas para {escolha}...")
+        st.warning("Nenhuma vaga aberta nesta região no momento.")
+
+# --- TELA DE MAPA (GPS) ---
+elif st.session_state.status == "mapa":
+    st.header("🗺️ GPS de Navegação")
     
-    # CARD DA MISSÃO 1
+    # Coordenadas de Osasco (Ponto de Apoio e Destino)
+    dados_mapa = pd.DataFrame({
+        'lat': [-23.5325, -23.5335],
+        'lon': [-46.7915, -46.7925]
+    })
+    
+    st.map(dados_mapa) # MAPA REAL
+    
     st.markdown("""
-        <div class="card-missao">
-            <span class="status-badge">DISPONÍVEL</span>
-            <h3>Varrer Praça da Matriz</h3>
-            <p><b>📍 Local:</b> Centro, Osasco</p>
-            <p><b>📦 Ponto de Apoio:</b> Base GS - Rua 15 (Retirar Vassoura/Pá)</p>
-            <h2 style="color: #00E676; margin-top: 10px;">R$ 25,00</h2>
-        </div>
-    """, unsafe_allow_html=True)
+    **📍 Roteiro da Missão:**
+    1. **Ponto de Apoio:** Base GS - Rua 15 (Retirar Vassoura/Pá).
+    2. **Destino Final:** Praça da Matriz (Executar limpeza).
+    """)
     
-    if st.button("ACEITAR MISSÃO: PRAÇA DA MATRIZ"):
+    if st.button("CHEGUEI NO DESTINO"):
         st.session_state.status = "executando"
         st.rerun()
 
-    if st.sidebar.button("Sair"):
-        st.session_state.status = "login"
-        st.rerun()
-
-# --- EXECUÇÃO DA MISSÃO ---
+# --- FINALIZAÇÃO ---
 elif st.session_state.status == "executando":
-    st.header("🚀 Missão em Andamento")
-    st.info("Passo 1: Dirija-se à Base GS para retirar o equipamento e bater o ponto.")
-    
-    st.divider()
-    
-    st.subheader("Finalização do Serviço")
-    st.write("Tire uma foto do local limpo para validar o pagamento:")
-    st.camera_input("Foto de comprovação")
-    
-    st.warning("⚠️ O pagamento será liberado após a devolução do material na Base.")
-    
-    if st.button("FINALIZAR E DEVOLVER MATERIAL"):
-        st.session_state.status = "processando_pix"
+    st.header("📸 Finalização")
+    st.camera_input("Tire foto do serviço pronto")
+    if st.button("CONCLUIR E RECEBER"):
+        st.session_state.saldo += 25.0
+        st.session_state.status = "pago"
         st.rerun()
-
-# --- LIQUIDAÇÃO INSTANTÂNEA ---
-elif st.session_state.status == "processando_pix":
-    st.header("🔄 Processando Pagamento...")
-    st.write("Verificando devolução de equipamento e fotos...")
-    
-    progress_bar = st.progress(0)
-    for percent_complete in range(100):
-        time.sleep(0.02)
-        progress_bar.progress(percent_complete + 1)
-        
-    st.session_state.saldo += 25.0
-    st.session_state.status = "pago"
-    st.rerun()
 
 elif st.session_state.status == "pago":
     st.balloons()
-    st.success("✅ SUCESSO! O valor foi enviado para sua carteira (LuzCoin/Caixa Tem).")
-    st.write(f"### Seu novo saldo: R$ {st.session_state.saldo:.2f}")
-    
-    if st.button("BUSCAR NOVA MISSÃO"):
+    st.success(f"✅ SUCESSO! Saldo atual: R$ {st.session_state.saldo:.2f}")
+    if st.button("VOLTAR AO MENU"):
         st.session_state.status = "menu"
         st.rerun()
-        
