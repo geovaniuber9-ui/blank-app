@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 
-# CONFIGURAÇÃO DE PÁGINA
-st.set_page_config(page_title="GS LuzSocial v16.0", page_icon="⚡", layout="wide")
+# 1. CONFIGURAÇÃO DE PÁGINA (Sempre no topo)
+st.set_page_config(page_title="GS LuzSocial v17.0", page_icon="⚡", layout="wide")
 
-# ESTILO PREMIUM DARK MODE
+# 2. ESTILO DARK MODE FORÇADO (Para evitar o fundo branco das fotos)
 st.markdown("""
     <style>
-    .main { background-color: #0B0E14; color: #E0E0E0; }
+    .stApp { background-color: #0B0E14; color: #E0E0E0; }
     [data-testid="stSidebar"] { background-image: linear-gradient(#050A30, #001219) !important; border-right: 1px solid #1A237E; }
     .card-premium {
         background: rgba(255, 255, 255, 0.05);
@@ -19,14 +19,13 @@ st.markdown("""
         background: linear-gradient(90deg, #00D4FF, #0052D4);
         color: white; border-radius: 12px; font-weight: bold; padding: 12px; width: 100%;
     }
+    .stCameraInput { border: 2px solid #00D4FF; border-radius: 15px; padding: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# INICIALIZAÇÃO DE ESTADOS
-if 'logado' not in st.session_state: st.session_state.logado = False
-if 'saldo' not in st.session_state: st.session_state.saldo = 0.0
-if 'status' not in st.session_state: st.session_state.status = "menu"
-if 'missao_atual' not in st.session_state: st.session_state.missao_atual = None
+# 3. INICIALIZAÇÃO DE ESTADOS
+for key, val in [('logado', False), ('saldo', 0.0), ('status', 'menu'), ('missao_atual', None)]:
+    if key not in st.session_state: st.session_state[key] = val
 
 def aceitar(nome, valor, local):
     st.session_state.missao_atual = {"nome": nome, "valor": valor, "local": local}
@@ -45,57 +44,57 @@ with st.sidebar:
     st.divider()
     if st.button("🚪 Sair"): st.session_state.logado = False; st.rerun()
 
-# --- TELA 1: MURAL ---
+# --- FLUXO PRINCIPAL ---
 if st.session_state.status == "menu":
-    st.title("📍 Radar de Missões")
-    tabs = st.tabs(["🩺 Saúde", "👩‍🍳 Cozinha", "🧹 Zeladoria", "🔌 Reparos", "🐾 PetCare"])
+    st.title("📍 Mural de Missões")
+    tabs = st.tabs(["🩺 Saúde", "👩‍🍳 Cozinha", "🧹 Zeladoria", "🔌 Reparos"])
     
-    # Exemplo de missão para teste
     with tabs[0]:
         v = ("Acompanhante Idoso", 102.0, "Vila Yara")
         st.markdown(f'<div class="card-premium"><h3>{v[0]}</h3><p>📍 {v[2]}</p><div class="valor-liq">R$ {v[1]:.2f}</div></div>', unsafe_allow_html=True)
-        st.button("ACEITAR MISSÃO", on_click=aceitar, args=(v[0], v[1], v[2]))
+        st.button("ACEITAR MISSÃO", key="btn_acc_1", on_click=aceitar, args=(v[0], v[1], v[2]))
 
-# --- TELA 2: NAVEGAÇÃO ---
 elif st.session_state.status == "mapa":
-    st.header(f"🧭 Rota: {st.session_state.missao_atual['local']}")
-    st.markdown(f'<a href="https://www.google.com/maps/search/{st.session_state.missao_atual["local"]}+Osasco" target="_blank"><button style="background:#FFB300; color:black; width:100%; border-radius:12px; padding:15px; font-weight:bold; border:none; cursor:pointer;">🧭 ABRIR GPS (WAZE/MAPS)</button></a>', unsafe_allow_html=True)
+    st.header(f"🧭 Destino: {st.session_state.missao_atual['local']}")
+    # Botão de GPS corrigido
+    st.markdown(f'<a href="https://www.google.com/maps/search/{st.session_state.missao_atual["local"]}+Osasco" target="_blank"><button style="background:#FFB300; color:black; width:100%; border-radius:12px; padding:15px; font-weight:bold; border:none; cursor:pointer;">🧭 ABRIR GOOGLE MAPS</button></a>', unsafe_allow_html=True)
     st.map(pd.DataFrame({'lat': [-23.5325], 'lon': [-46.7915]}))
     if st.button("✅ CHEGUEI NO LOCAL"):
-        st.session_state.status = "selfie_entrada"
+        st.session_state.status = "registro_inicio"
         st.rerun()
 
-# --- TELA 3: SELFIE E FOTO DO ANTES ---
-elif st.session_state.status == "selfie_entrada":
-    st.header("🤳 Início e Registro")
-    st.info("Tire uma selfie e a foto do local/item ANTES do serviço.")
-    st.camera_input("1. Selfie de Validação")
-    st.camera_input("2. Foto do ANTES")
-    if st.button("🚀 INICIAR SERVIÇO AGORA"):
-        st.session_state.status = "executando"
-        st.rerun()
+elif st.session_state.status == "registro_inicio":
+    st.header("📸 Registro de Entrada")
+    st.info("Obrigatório: Selfie + Foto do local ANTES do serviço.")
+    selfie = st.camera_input("1. Sua Selfie")
+    foto_antes = st.camera_input("2. Foto do ANTES")
+    
+    if selfie and foto_antes:
+        if st.button("🚀 INICIAR TRABALHO"):
+            st.session_state.status = "executando"
+            st.rerun()
 
-# --- TELA 4: EM ANDAMENTO ---
 elif st.session_state.status == "executando":
-    st.warning(f"⚠️ EM EXECUÇÃO: {st.session_state.missao_atual['nome']}")
+    st.warning(f"⚠️ TRABALHO EM ANDAMENTO: {st.session_state.missao_atual['nome']}")
+    st.markdown("Execute o serviço com capricho. Ao terminar, clique abaixo.")
     if st.button("🏁 FINALIZAR TRABALHO"):
-        st.session_state.status = "foto_depois"
+        st.session_state.status = "registro_fim"
         st.rerun()
 
-# --- TELA 5: FOTO DO DEPOIS E CONCLUIR ---
-elif st.session_state.status == "foto_depois":
-    st.header("📸 Comprovação Final")
-    st.info("Tire a foto do serviço CONCLUÍDO (Depois).")
-    st.camera_input("Foto do DEPOIS")
-    if st.button("💎 ENVIAR E RECEBER"):
-        st.session_state.saldo += st.session_state.missao_atual['valor']
-        st.session_state.status = "sucesso"
-        st.rerun()
+elif st.session_state.status == "registro_fim":
+    st.header("📸 Comprovação de Saída")
+    st.success("Trabalho concluído! Agora registre o DEPOIS.")
+    foto_depois = st.camera_input("Foto do DEPOIS")
+    
+    if foto_depois:
+        if st.button("💎 ENVIAR E RECEBER PAGAMENTO"):
+            st.session_state.saldo += st.session_state.missao_atual['valor']
+            st.session_state.status = "concluido"
+            st.rerun()
 
-# --- TELA 6: SUCESSO ---
-elif st.session_state.status == "sucesso":
+elif st.session_state.status == "concluido":
     st.balloons()
-    st.success(f"Excelente! R$ {st.session_state.missao_atual['valor']:.2f} creditados.")
-    if st.button("VOLTAR AO MURAL"):
+    st.success(f"Excelente! Pagamento de R$ {st.session_state.missao_atual['valor']:.2f} creditado!")
+    if st.button("VOLTAR AO DASHBOARD"):
         st.session_state.status = "menu"; st.rerun()
         
