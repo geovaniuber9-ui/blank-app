@@ -1,61 +1,67 @@
 import streamlit as st
 import pandas as pd
 
-# 1. CONFIGURAÇÃO DE PÁGINA
-st.set_page_config(page_title="GS Consultoria v18.0", page_icon="⚡", layout="wide")
+# 1. CONFIGURAÇÃO E ESTILO
+st.set_page_config(page_title="GS Consultoria v19.0", page_icon="⚡", layout="wide")
 
-# 2. ESTILO DARK MODE PROFISSIONAL
 st.markdown("""
     <style>
     .stApp { background-color: #0B0E14; color: #E0E0E0; }
     .card-trabalho {
         background: rgba(255, 255, 255, 0.05);
-        border: 1px solid #1A237E;
-        padding: 15px; border-radius: 12px; margin-bottom: 10px;
+        border-left: 5px solid #00D4FF;
+        padding: 15px; border-radius: 8px; margin-bottom: 10px;
     }
-    .valor { color: #00E676; font-size: 22px; font-weight: bold; }
-    .stButton>button {
-        background: linear-gradient(90deg, #00D4FF, #0052D4);
-        color: white; border-radius: 10px; font-weight: bold; width: 100%;
-    }
+    .valor { color: #00E676; font-size: 20px; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. BANCO DE DADOS DE TRABALHOS (Mais opções adicionadas)
+# 2. BANCO DE DADOS EXPANDIDO (Conforme Imagens)
 dados_trabalhos = {
-    "Saúde": [
+    "🏥 Saúde": [
         ("Acompanhante Idoso", 120.0, "Vila Yara"),
         ("Cuidador Hospitalar", 180.0, "Centro"),
         ("Instrumentador Cirúrgico", 250.0, "Saúde"),
-        ("Técnico de Enfermagem", 150.0, "Km 18"),
-        ("Fisioterapeuta Domiciliar", 200.0, "Campesina")
+        ("Técnico de Enfermagem", 150.0, "Km 18")
     ],
-    "Cozinha": [
+    "🧹 Zeladoria": [
+        ("Varrição de Vias e Praças", 45.0, "Centro"),
+        ("Limpeza de Bueiros", 75.0, "Rochdale"),
+        ("Pintura de Guias e Meio-fio", 90.0, "IAPI"),
+        ("Pequenos Reparos (Loteamentos)", 130.0, "Piratininga"),
+        ("Conservação de Monumentos", 110.0, "Bela Vista")
+    ],
+    "♻️ Resíduos": [
+        ("Coleta de Lixo Seletiva", 65.0, "Km 18"),
+        ("Triagem em Cooperativa", 55.0, "Mutinga"),
+        ("Agente de Reciclagem (Condomínios)", 80.0, "Umuarama"),
+        ("Coleta de Óleo de Cozinha", 40.0, "Centro")
+    ],
+    "🌱 Jardinagem": [
+        ("Roçagem de Praças", 85.0, "Ayrosa"),
+        ("Plantio de Mudas", 70.0, "City Bussocaba"),
+        ("Manutenção de Áreas Verdes", 95.0, "Jardim Abril"),
+        ("Limpeza de Terrenos Baldios", 120.0, "Adalgisa")
+    ],
+    "🎪 Eventos": [
+        ("Montagem de Estruturas/Palcos", 150.0, "Estádio Municipal"),
+        ("Logística de Grades/Cercas", 130.0, "Parque Continental"),
+        ("Limpeza Pós-Evento", 100.0, "Centro de Eventos")
+    ],
+    "👨‍🍳 Cozinha": [
         ("Chef em Domicílio", 300.0, "Adalgisa"),
-        ("Preparo de Marmitas (Dia)", 140.0, "Bela Vista"),
-        ("Ajudante de Buffet", 90.0, "Rochdale"),
-        ("Cozinheiro Geral", 160.0, "Umuarama")
-    ],
-    "Reparos": [
-        ("Eletricista Residencial", 130.0, "Mutinga"),
-        ("Encanador 24h", 110.0, "Piratininga"),
-        ("Pintura de Parede", 95.0, "IAPI"),
-        ("Instalação de Ar", 200.0, "Ayrosa")
-    ],
-    "Zeladoria": [
-        ("Jardinagem Completa", 85.0, "Bela Vista"),
-        ("Limpeza de Piscina", 70.0, "City Bussocaba"),
-        ("Limpeza de Bueiro", 65.0, "Rochdale")
+        ("Preparo de Marmitas", 140.0, "Bela Vista"),
+        ("Ajudante de Buffet", 90.0, "Rochdale")
     ]
 }
 
-# 4. CONTROLE DE ESTADOS (Login e Fluxo)
+# 3. CONTROLE DE ESTADOS
 if 'logado' not in st.session_state: st.session_state.logado = False
 if 'status' not in st.session_state: st.session_state.status = "mural"
 if 'missao' not in st.session_state: st.session_state.missao = None
 if 'ganhos' not in st.session_state: st.session_state.ganhos = 0.0
 
-# --- TELA DE LOGIN ---
+# --- LOGIN ---
 if not st.session_state.logado:
     st.markdown("<h1 style='text-align: center;'>⚡ GS CONSULTORIA</h1>", unsafe_allow_html=True)
     if st.button("ACESSAR DASHBOARD"):
@@ -65,17 +71,17 @@ if not st.session_state.logado:
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.title("👤 Geovani Santi")
-    st.metric("Saldo Total", f"R$ {st.session_state.ganhos:.2f}")
+    st.title(f"👤 Geovani Santi")
+    st.metric("Saldo Acumulado", f"R$ {st.session_state.ganhos:.2f}")
     if st.button("🚪 Sair"):
         st.session_state.logado = False
         st.rerun()
 
-# --- LÓGICA DE NAVEGAÇÃO DO APP ---
+# --- NAVEGAÇÃO ---
 
-# ETAPA 1: MURAL DE TRABALHOS
+# ETAPA 1: MURAL
 if st.session_state.status == "mural":
-    st.title("📍 Radar de Missões")
+    st.title("📍 Mural de Missões Disponíveis")
     tabs = st.tabs(list(dados_trabalhos.keys()))
     
     for i, categoria in enumerate(dados_trabalhos.keys()):
@@ -92,60 +98,60 @@ if st.session_state.status == "mural":
                     st.session_state.status = "gps"
                     st.rerun()
 
-# ETAPA 2: GPS E CHEGADA
+# ETAPA 2: ROTA/MAPA
 elif st.session_state.status == "gps":
-    st.header(f"🧭 Rota: {st.session_state.missao['local']}")
-    st.info(f"Trabalho: {st.session_state.missao['nome']}")
+    st.header(f"🧭 Indo para: {st.session_state.missao['local']}")
+    st.info(f"Serviço: {st.session_state.missao['nome']}")
     
-    # Botão de GPS real
-    st.markdown(f'<a href="https://www.google.com/maps/search/{st.session_state.missao["local"]}+Osasco" target="_blank"><button style="background:#FFB300; color:black; width:100%; border:12px; padding:15px; font-weight:bold; border:none; cursor:pointer;">🧭 ABRIR MAPS / WAZE</button></a>', unsafe_allow_html=True)
+    # Botão para abrir o GPS externo
+    st.markdown(f'<a href="https://www.google.com/maps/search/{st.session_state.missao["local"]}+Osasco" target="_blank"><button style="background:#FFB300; width:100%; border-radius:10px; padding:10px; font-weight:bold; border:none; color:black;">ABRIR NO GOOGLE MAPS</button></a>', unsafe_allow_html=True)
     
     st.map(pd.DataFrame({'lat': [-23.5325], 'lon': [-46.7915]})) # Centro de Osasco
     
     if st.button("✅ CHEGUEI NO LOCAL"):
-        st.session_state.status = "fotos_entrada"
+        st.session_state.status = "evidencia_inicio"
         st.rerun()
 
-# ETAPA 3: SELFIE E FOTO DO ANTES
-elif st.session_state.status == "fotos_entrada":
-    st.header("🤳 Início do Turno")
-    st.warning("Para iniciar, precisamos da sua selfie e da foto do local.")
+# ETAPA 3: EVIDÊNCIAS DE INÍCIO (Selfie + Foto Antes)
+elif st.session_state.status == "evidencia_inicio":
+    st.header("📸 Registro de Início")
+    st.warning("Obrigatório: Envie as fotos para liberar o início da tarefa.")
     
-    foto1 = st.camera_input("1. Sua Selfie (Validação)")
-    foto2 = st.camera_input("2. Foto do local (ANTES do serviço)")
+    selfie = st.camera_input("🤳 Tire uma Selfie para Validação")
+    foto_antes = st.camera_input("📷 Foto do Local (COMO ESTÁ ANTES)")
     
-    if foto1 and foto2:
-        if st.button("🚀 INICIAR TAREFA AGORA"):
-            st.session_state.status = "em_andamento"
+    if selfie and foto_antes:
+        if st.button("🚀 TUDO PRONTO! INICIAR TRABALHO"):
+            st.session_state.status = "trabalhando"
             st.rerun()
 
-# ETAPA 4: TRABALHANDO
-elif st.session_state.status == "em_andamento":
-    st.success(f"⚡ VOCÊ ESTÁ EM SERVIÇO: {st.session_state.missao['nome']}")
-    st.markdown("Execute o trabalho com excelência. Ao terminar, clique no botão abaixo.")
+# ETAPA 4: CRONÔMETRO/TRABALHO
+elif st.session_state.status == "trabalhando":
+    st.success(f"👷 TRABALHO EM ANDAMENTO: {st.session_state.missao['nome']}")
+    st.markdown("Execute o serviço conforme as normas de segurança.")
     
-    if st.button("🏁 FINALIZAR TAREFA"):
-        st.session_state.status = "foto_depois"
+    if st.button("🏁 CONCLUÍ O SERVIÇO"):
+        st.session_state.status = "evidencia_fim"
         st.rerun()
 
-# ETAPA 5: FOTO DO DEPOIS E RECEBIMENTO
-elif st.session_state.status == "foto_depois":
-    st.header("📸 Finalização")
-    st.info("Tire uma foto de como ficou o serviço (DEPOIS).")
+# ETAPA 5: EVIDÊNCIA DE FINALIZAÇÃO (Foto Depois)
+elif st.session_state.status == "evidencia_fim":
+    st.header("📸 Registro de Entrega")
+    st.info("Mostre o resultado final do seu trabalho.")
     
-    foto3 = st.camera_input("Foto da Entrega (DEPOIS)")
+    foto_depois = st.camera_input("📷 Foto do Trabalho (DEPOIS / CONCLUÍDO)")
     
-    if foto3:
-        if st.button("💎 ENVIAR E RECEBER PAGAMENTO"):
+    if foto_depois:
+        if st.button("💰 FINALIZAR E RECEBER"):
             st.session_state.ganhos += st.session_state.missao['valor']
             st.session_state.status = "concluido"
             st.rerun()
 
-# ETAPA 6: SUCESSO
+# ETAPA 6: PAGAMENTO CONCLUÍDO
 elif st.session_state.status == "concluido":
     st.balloons()
-    st.success(f"Dinheiro na conta! Você recebeu R$ {st.session_state.missao['valor']:.2f}")
+    st.success(f"💎 Excelente trabalho! Pagamento de R$ {st.session_state.missao['valor']:.2f} creditado.")
     if st.button("VOLTAR AO MURAL"):
         st.session_state.status = "mural"
         st.rerun()
-    
+        
