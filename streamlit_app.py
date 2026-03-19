@@ -2,14 +2,22 @@ import streamlit as st
 import pandas as pd
 
 # 1. CONFIGURAÇÃO
-st.set_page_config(page_title="GS Consultoria - O.S. & Avaliação", page_icon="⭐", layout="wide")
+st.set_page_config(page_title="GS Consultoria - Radar", page_icon="🌱", layout="wide")
 
-# ESTILO VISUAL ECO-BUSINESS
+# ESTILO VISUAL ECO-BUSINESS (Ajustado para o verde claro que você pediu)
 st.markdown("""
     <style>
-    .stApp { background-color: #E8F5E9 !important; }
-    .card { background: white; padding: 15px; border-radius: 12px; border: 2px solid #2E7D32; margin-bottom: 10px; }
+    .stApp { background-color: #F0F9F1 !important; }
+    .card { 
+        background: white; 
+        padding: 20px; 
+        border-radius: 15px; 
+        border-left: 5px solid #2E7D32; 
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 15px; 
+    }
     .status-concluido { color: #2E7D32; font-weight: bold; }
+    .valor { color: #2E7D32; font-size: 24px; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -36,67 +44,78 @@ with st.sidebar:
         st.session_state.logado = False
         st.rerun()
 
-# --- MODO EMPRESA (CONTRATANTE) ---
+# --- MODO EMPRESA ---
 if modo == "🏢 Empresa":
     st.title("🏢 Gestão de Contratação")
-    
     col1, col2 = st.columns(2)
     
     with col1:
         st.subheader("📝 Abrir Nova O.S.")
         with st.form("nova_os"):
-            nome_empresa = st.text_input("Nome da sua Empresa", value="GS Consultoria")
-            servico = st.selectbox("Serviço", ["Zeladoria", "Saúde", "Logística", "Jardinagem"])
-            cliente_final = st.text_input("Quem vai receber? (Cliente)")
-            valor = st.number_input("Valor (R$)", min_value=10.0)
+            st.text_input("Nome da sua Empresa", value="GS Consultoria")
+            st.selectbox("Categoria", ["Zeladoria", "Saúde", "Resíduos", "Jardinagem"])
+            st.text_input("Serviço Específico (ex: Varrição)")
+            st.number_input("Valor (R$)", min_value=10.0)
             if st.form_submit_button("LANÇAR NO RADAR"):
-                # Simula o lançamento
-                st.success("Missão lançada!")
+                st.success("Missão lançada no sistema!")
 
     with col2:
         st.subheader("📊 Histórico e Avaliação")
         if not st.session_state.historico:
-            st.info("Nenhuma missão concluída para avaliar ainda.")
+            st.info("Aguardando conclusões...")
         else:
             for i, os in enumerate(st.session_state.historico):
-                with st.container():
-                    st.markdown(f"""
-                        <div class="card">
-                            <span class="status-concluido">✅ CONCLUÍDO</span><br>
-                            <b>Serviço:</b> {os['servico']}<br>
-                            <b>Prestador:</b> {os['prestador']}<br>
-                            <b>Cliente:</b> {os['cliente']}
-                        </div>
-                    """, unsafe_allow_html=True)
-                    # Sistema de Estrelas
-                    nota = st.select_slider(f"Avalie o prestador {os['prestador']}:", 
-                                          options=[1, 2, 3, 4, 5], key=f"nota_{i}")
-                    st.write("⭐" * nota)
+                st.markdown(f'<div class="card">✅ <b>{os["servico"]}</b> - Finalizado</div>', unsafe_allow_html=True)
 
-# --- MODO PRESTADOR (GEOVANI) ---
+# --- MODO PRESTADOR (COM O MENU DE CATEGORIAS) ---
 else:
-    st.title("🚀 Radar de Missões")
+    st.title("🌱 Radar GS - Osasco")
     
-    # Exemplo de Missão Disponível
-    st.markdown("""
-        <div class="card">
-            <small>EMPRESA CHAMANDO: <b>Prefeitura de Osasco</b></small>
-            <h3>Pintura de Meio-Fio</h3>
-            <p>📍 Local: Bela Vista | 👤 Receber de: <b>Fiscal Adauto</b></p>
-            <h2 style="color: green;">R$ 85,00</h2>
-        </div>
-    """, unsafe_allow_html=True)
+    # CRIAÇÃO DO MENU (Abas)
+    tab1, tab2, tab3, tab4 = st.tabs(["🧹 Zeladoria", "🏥 Saúde", "♻️ Resíduos", "🌳 Jardinagem"])
+
+    with tab1:
+        # Missão 1
+        st.markdown("""
+            <div class="card">
+                <p style="color: #666; margin-bottom: 5px;">📍 Centro</p>
+                <b style="font-size: 18px;">Varrição de Vias</b>
+                <div class="valor">R$ 55,00</div>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ACEITAR: VARRIÇÃO DE VIAS"):
+            st.success("Missão aceita!")
+
+        # Missão 2
+        st.markdown("""
+            <div class="card">
+                <p style="color: #666; margin-bottom: 5px;">📍 Bela Vista</p>
+                <b style="font-size: 18px;">Pintura de Meio-Fio</b>
+                <div class="valor">R$ 85,00</div>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ACEITAR: PINTURA DE MEIO-FIO"):
+            st.session_state.historico.append({"servico": "Pintura de Meio-Fio", "status": "Concluído"})
+            st.balloons()
+            st.success("Missão enviada para avaliação!")
+
+        # Missão 3
+        st.markdown("""
+            <div class="card">
+                <p style="color: #666; margin-bottom: 5px;">📍 Rochdale</p>
+                <b style="font-size: 18px;">Limpeza de Bueiro</b>
+                <div class="valor">R$ 120,00</div>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("ACEITAR: LIMPEZA DE BUEIRO"):
+            st.info("Missão adicionada à sua agenda.")
+
+    with tab2:
+        st.info("Nenhuma missão de Saúde disponível no momento.")
     
-    if st.button("FINALIZAR ESTA MISSÃO AGORA"):
-        # Quando o Geovani finaliza, os dados vão para o histórico da empresa
-        nova_concluida = {
-            "servico": "Pintura de Meio-Fio",
-            "empresa": "Prefeitura de Osasco",
-            "prestador": "Geovani Santi",
-            "cliente": "Fiscal Adauto",
-            "valor": 85.0
-        }
-        st.session_state.historico.append(nova_concluida)
-        st.balloons()
-        st.success("Missão enviada para avaliação da empresa!")
+    with tab3:
+        st.info("Nenhuma missão de Resíduos disponível no momento.")
+        
+    with tab4:
+        st.info("Nenhuma missão de Jardinagem disponível no momento.")
         
