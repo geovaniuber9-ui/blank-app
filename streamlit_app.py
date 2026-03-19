@@ -1,9 +1,10 @@
 import streamlit as st
+import time
 
 # 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="GS Consultoria - Super Radar", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="GS Consultoria - Radar Completo", page_icon="🚀", layout="wide")
 
-# ESTILO VISUAL (Verde Natureza + Cards Profissionais)
+# ESTILO VISUAL (Eco-Business)
 st.markdown("""
     <style>
     .stApp { background-color: #F0F9F1 !important; }
@@ -12,125 +13,116 @@ st.markdown("""
         border-left: 5px solid #2E7D32; box-shadow: 2px 2px 12px rgba(0,0,0,0.08);
         margin-bottom: 15px; 
     }
-    .valor { color: #2E7D32; font-size: 28px; font-weight: bold; margin-top: 5px; }
+    .valor { color: #2E7D32; font-size: 28px; font-weight: bold; }
+    .pix-box { 
+        background-color: #E0F2F1; padding: 5px 10px; border-radius: 5px; 
+        color: #00796B; font-weight: bold; font-size: 14px; display: inline-block;
+    }
     .btn-maps { 
         background-color: #4285F4; color: white !important; 
-        padding: 10px 20px; border-radius: 8px; 
-        text-decoration: none; font-weight: bold; display: inline-block;
-    }
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #ffffff; border-radius: 5px; padding: 10px; border: 1px solid #ddd;
+        padding: 8px 15px; border-radius: 8px; text-decoration: none; font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. SISTEMA DE DADOS (MEMÓRIA DO APP)
+# 2. INICIALIZAÇÃO DE DADOS
 if 'missoes_ativas' not in st.session_state:
     st.session_state.missoes_ativas = [
-        {"id": 101, "empresa": "GS Consultoria", "categoria": "💅 Beleza", "servico": "Manicure e Pedicure", "local": "Centro", "valor": 60.0},
-        {"id": 102, "empresa": "Residencial Bela Vista", "categoria": "🛠️ Reparos", "servico": "Troca de Resistência Chuveiro", "local": "Bela Vista", "valor": 80.0}
+        {"id": 1, "empresa": "Residencial Osasco", "categoria": "⚡ Eletricista", "servico": "Troca de Disjuntor", "local": "Rochdale", "valor": 120.0},
+        {"id": 2, "empresa": "Particular", "categoria": "🛋️ Montador", "servico": "Montar Guarda-Roupa", "local": "Km 18", "valor": 150.0}
     ]
 if 'logado' not in st.session_state: st.session_state.logado = False
 
-# 3. LOGIN SIMPLES (1/1)
+# 3. LOGIN (1/1)
 if not st.session_state.logado:
     st.title("GS Consultoria 🌱")
     u = st.text_input("Usuário")
     s = st.text_input("Senha", type="password")
-    if st.button("ACESSAR SISTEMA"):
+    if st.button("ACESSAR"):
         if u == "1" and s == "1":
             st.session_state.logado = True
             st.rerun()
     st.stop()
 
-# 4. DEFINIÇÃO DAS CATEGORIAS (O CORAÇÃO DO SEU MENU)
+# 4. CATEGORIAS ATUALIZADAS
 categorias_master = [
-    "🧹 Zeladoria", "💅 Beleza", "🛠️ Reparos", "🔑 Chaveiro", 
-    "🚰 Encanador", "🌳 Jardinagem", "🧼 Limpeza", "📦 Entregas", 
-    "🚚 Carretos", "🐶 Pets"
+    "🧹 Zeladoria", "💅 Beleza", "🛠️ Reparos", "🛋️ Montador", 
+    "🪚 Marceneiro", "🚰 Encanador", "⚡ Eletricista", "🔑 Chaveiro",
+    "🌳 Jardinagem", "🧼 Limpeza", "📦 Entregas", "🚚 Carretos"
 ]
 
-# SIDEBAR (MENU LATERAL)
+# SIDEBAR
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/1048/1048953.png", width=100)
-    st.write(f"### Bem-vindo, Geovani!")
-    modo = st.radio("Selecione sua visão:", ["🚀 Radar do Prestador", "🏢 Gestão da Empresa"])
-    st.divider()
-    if st.button("DESLOGAR"):
+    st.write(f"### Olá, Geovani!")
+    modo = st.radio("Visão:", ["🚀 Radar do Prestador", "🏢 Gestão da Empresa"])
+    if st.button("SAIR"):
         st.session_state.logado = False
         st.rerun()
 
-# --- MODO EMPRESA (PARA VOCÊ CRIAR E EXCLUIR) ---
+# --- MODO EMPRESA ---
 if modo == "🏢 Gestão da Empresa":
-    st.title("🏢 Gerenciar Novas Missões")
-    
-    with st.expander("📝 CADASTRAR NOVO SERVIÇO", expanded=True):
-        with st.form("form_os"):
-            col1, col2 = st.columns(2)
-            with col1:
-                emp_name = st.text_input("Nome do Cliente/Empresa", value="GS Consultoria")
-                cat_sel = st.selectbox("Categoria do Serviço", categorias_master)
-                valor_os = st.number_input("Valor a Pagar (R$)", min_value=1.0, step=5.0)
-            with col2:
-                serv_desc = st.text_input("Descrição (Ex: Corte de Cabelo)")
-                bairro_loc = st.text_input("Bairro/Local em Osasco")
-            
-            if st.form_submit_button("LANÇAR NO RADAR 🚀"):
-                if serv_desc and bairro_loc:
-                    import time
-                    nova_m = {
-                        "id": int(time.time()), 
-                        "empresa": emp_name, "categoria": cat_sel, 
-                        "servico": serv_desc, "local": bairro_loc, "valor": valor_os
-                    }
-                    st.session_state.missoes_ativas.append(nova_m)
-                    st.success("Missão lançada com sucesso!")
-                    st.rerun()
+    st.title("🏢 Painel de Lançamentos")
+    with st.form("form_os"):
+        col1, col2 = st.columns(2)
+        with col1:
+            emp_name = st.text_input("Cliente/Empresa", value="GS Consultoria")
+            cat_sel = st.selectbox("Categoria", categorias_master)
+            valor_os = st.number_input("Valor (R$)", min_value=1.0)
+        with col2:
+            serv_desc = st.text_input("O que precisa ser feito?")
+            bairro_loc = st.text_input("Local (Bairro)")
+        
+        if st.form_submit_button("LANÇAR NO RADAR 🚀"):
+            if serv_desc and bairro_loc:
+                nova_m = {
+                    "id": int(time.time()), "empresa": emp_name, 
+                    "categoria": cat_sel, "servico": serv_desc, 
+                    "local": bairro_loc, "valor": valor_os
+                }
+                st.session_state.missoes_ativas.append(nova_m)
+                st.success("Publicado!")
+                st.rerun()
 
-    st.subheader("📋 Serviços Ativos no Momento")
+    st.subheader("📋 Ativas")
     for i, m in enumerate(st.session_state.missoes_ativas):
-        c_info, c_del = st.columns([5, 1])
-        c_info.info(f"**{m['categoria']}**: {m['servico']} | {m['local']} | R$ {m['valor']}")
-        if c_del.button("Excluir", key=f"del_{m['id']}"):
+        c_i, c_d = st.columns([5, 1])
+        c_i.write(f"**{m['categoria']}**: {m['servico']} - {m['local']}")
+        if c_d.button("❌", key=f"del_{m['id']}"):
             st.session_state.missoes_ativas.pop(i)
             st.rerun()
 
-# --- MODO PRESTADOR (VISÃO DE QUEM VAI TRABALHAR) ---
+# --- MODO PRESTADOR ---
 else:
-    st.title("🚀 Radar de Missões GS")
-    
-    # CRIA AS ABAS DINAMICAMENTE
+    st.title("🚀 Radar GS - Osasco")
     tabs = st.tabs(categorias_master)
 
     for i, cat_nome in enumerate(categorias_master):
         with tabs[i]:
-            # Filtra apenas o que é daquela categoria
-            servicos_da_aba = [s for s in st.session_state.missoes_ativas if s['categoria'] == cat_nome]
-            
-            if not servicos_da_aba:
-                st.write("---")
-                st.info(f"Nenhum serviço de **{cat_nome}** disponível agora. Tente outra categoria!")
+            servicos = [s for s in st.session_state.missoes_ativas if s['categoria'] == cat_nome]
+            if not servicos:
+                st.info(f"Sem chamados para {cat_nome} agora.")
             else:
-                for s in servicos_da_aba:
+                for s in servicos:
                     st.markdown(f"""
                         <div class="card">
-                            <small>Solicitante: <b>{s['empresa']}</b></small>
+                            <div style="display: flex; justify-content: space-between;">
+                                <small>Solicitante: {s['empresa']}</small>
+                                <span class="pix-box">🔹 PAGAMENTO VIA PIX</span>
+                            </div>
                             <h2>{s['servico']}</h2>
-                            <p>📍 Bairro: {s['local']}</p>
+                            <p>📍 Local: {s['local']}</p>
                             <div class="valor">R$ {s['valor']:.2f}</div>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Funcionalidades Extras
-                    col_gps, col_foto, col_fim = st.columns([1, 1, 1])
-                    with col_gps:
-                        maps_link = f"https://www.google.com/maps/search/{s['local']}+Osasco"
-                        st.markdown(f'<a href="{maps_link}" target="_blank" class="btn-maps">🗺️ ABRIR GPS</a>', unsafe_allow_html=True)
-                    with col_foto:
-                        st.file_uploader("📸 Foto da Conclusão", type=['jpg', 'png'], key=f"pic_{s['id']}")
-                    with col_fim:
-                        if st.button("✅ FINALIZAR", key=f"fin_{s['id']}"):
+                    c_gps, c_foto, c_fim = st.columns(3)
+                    with c_gps:
+                        link = f"https://www.google.com/maps/search/{s['local']}+Osasco"
+                        st.markdown(f'<a href="{link}" target="_blank" class="btn-maps">🗺️ GPS</a>', unsafe_allow_html=True)
+                    with c_foto:
+                        st.file_uploader("📸 Comprovante", type=['jpg'], key=f"p_{s['id']}")
+                    with c_fim:
+                        if st.button("✅ FINALIZAR", key=f"f_{s['id']}"):
                             st.balloons()
-                            st.success("Missão concluída com sucesso!")
-                
+                            st.success("Missão Concluída!")
+            
