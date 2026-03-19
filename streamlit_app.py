@@ -1,122 +1,84 @@
 import streamlit as st
 import time
 
-# 1. CONFIGURAÇÃO DA PÁGINA
+# 1. CONFIGURAÇÃO E ESTILO
 st.set_page_config(page_title="GS Radar Pro", page_icon="📈", layout="wide")
 
-# ESTILO VISUAL "APP DE VIAGEM"
 st.markdown("""
     <style>
     .stApp { background-color: #F7F9FB !important; }
-    .job-card { 
-        background: white; padding: 18px; border-radius: 12px; 
-        border: 1px solid #E0E4E8; margin-bottom: 12px;
-        box-shadow: 0px 4px 6px rgba(0,0,0,0.02);
-    }
-    .price-tag { color: #111; font-size: 24px; font-weight: 900; }
-    .pix-badge { background-color: #00BFA5; color: white; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-    .card-badge { background-color: #4285F4; color: white; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-    .km-info { color: #70757A; font-size: 14px; font-weight: 500; }
-    .sidebar-info { 
-        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); 
-        color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px;
-    }
+    .sidebar-info { background: #1B5E20; color: white; padding: 20px; border-radius: 15px; text-align: center; }
+    .login-box { background: white; padding: 30px; border-radius: 15px; border: 1px solid #ddd; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. BANCO DE DADOS (SESSÃO)
-if 'saldo' not in st.session_state: st.session_state.saldo = 10.00  # Saldo inicial teste
+# 2. INICIALIZAÇÃO DO SISTEMA
+if 'logado' not in st.session_state:
+    st.session_state.logado = False
+if 'saldo' not in st.session_state:
+    st.session_state.saldo = 10.00
 if 'missoes' not in st.session_state:
-    st.session_state.missoes = [
-        {"id": 1, "cat": "🚰 Encanador", "job": "Vazamento em Banheiro", "loc": "Jd. Elvira, Osasco", "val": 150.0, "pay": "PIX", "dist": "2.1 km"},
-        {"id": 2, "cat": "🛋️ Montador", "job": "Painel de TV 75'", "loc": "Vila Yara", "val": 180.0, "pay": "Cartão (Máquina)", "dist": "4.5 km"}
-    ]
+    st.session_state.missoes = []
 
-# --- SIDEBAR: GESTÃO FINANCEIRA E RECARGA ---
-with st.sidebar:
-    st.markdown(f"""<div class="sidebar-info">
-        <small>SALDO PARA TRABALHAR</small><br>
-        <span style="font-size: 28px; font-weight: bold;">R$ {st.session_state.saldo:.2f}</span>
-    </div>""", unsafe_allow_html=True)
-    
-    with st.expander("💳 RECARREGAR AGORA"):
-        valor_recarga = st.selectbox("Escolha o valor:", [20, 50, 100])
-        if st.button(f"Gerar PIX de R$ {valor_recarga}"):
-            st.warning("Copia a chave PIX: `geovanisanti@exemplo.com`")
-            st.image("https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PIX_GEVANI_EXEMPLO")
-            if st.button("Confirmar Pagamento"):
-                st.session_state.saldo += valor_recarga
-                st.success("Crédito adicionado!")
+# --- 3. TELA DE LOGIN (A PORTARIA) ---
+if not st.session_state.logado:
+    st.title("GS Consultoria 🌱")
+    with st.container():
+        st.subheader("Acesso Restrito")
+        user = st.text_input("Usuário")
+        password = st.text_input("Senha", type="password")
+        
+        if st.button("ENTRAR NO SISTEMA", use_container_width=True):
+            if user == "1" and password == "1":
+                st.session_state.logado = True
+                st.success("Acesso liberado!")
+                time.sleep(0.5)
                 st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos!")
+    st.stop() # PARA O CÓDIGO AQUI SE NÃO ESTIVER LOGADO
+
+# --- 4. SE CHEGOU AQUI, ESTÁ LOGADO (CONTEÚDO DO APP) ---
+
+with st.sidebar:
+    st.markdown(f'<div class="sidebar-info"><small>SALDO ATUAL</small><br><span style="font-size: 25px;">R$ {st.session_state.saldo:.2f}</span></div>', unsafe_allow_html=True)
     
     st.divider()
-    modo = st.radio("Módulo:", ["🚀 Radar (Prestador)", "🏢 Empresa (Lançar)"])
-    st.divider()
-    st.link_button("🆘 Suporte WhatsApp", "https://wa.me/5511999999999?text=Quero%20recarga%20de%20crédito")
-
-# --- MODO PRESTADOR (ESTILO INDRIVE/UBER) ---
-if modo == "🚀 Radar (Prestador)":
-    st.title("📲 Pedidos Disponíveis")
+    modo = st.radio("Selecione o Módulo:", ["🚀 Radar de Pedidos", "🏢 Lançar Serviço"])
     
-    categorias = ["Todos", "🛠️ Reparos", "🚰 Encanador", "⚡ Eletricista", "🛋️ Montador", "🪚 Marceneiro", "💅 Beleza"]
-    escolha_cat = st.selectbox("Filtrar por tipo:", categorias)
+    if st.button("SAIR / LOGOUT"):
+        st.session_state.logado = False
+        st.rerun()
 
-    # Filtragem
-    lista_exibir = st.session_state.missoes if escolha_cat == "Todos" else [m for m in st.session_state.missoes if m['cat'].strip() == escolha_cat.strip()]
+# --- MODO PRESTADOR ---
+if modo == "🚀 Radar de Pedidos":
+    st.title("📲 Radar GS - Osasco")
+    if not st.session_state.missoes:
+        st.info("Nenhum pedido no radar no momento.")
+    else:
+        for m in st.session_state.missoes:
+            st.write(f"**{m['job']}** - {m['loc']} (R$ {m['val']})")
+            if st.button(f"Aceitar #{m['id']}", key=f"ac_{m['id']}"):
+                st.success("Missão aceita!")
 
-    if not lista_exibir:
-        st.info("Nenhuma missão nesta categoria no momento.")
-    
-    for m in lista_exibir:
-        taxa = 2.50 # VALOR FIXO QUE VOCÊ GANHA POR SERVIÇO
-        
-        st.markdown(f"""
-            <div class="job-card">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <span class="km-info">📍 {m['dist']} • {m['loc']}</span><br>
-                        <b style="font-size: 20px;">{m['job']}</b><br>
-                        <span style="color: #666;">{m['cat']}</span><br><br>
-                        <span class="{'pix-badge' if m['pay'] == 'PIX' else 'card-badge'}">{m['pay']}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <span class="price-tag">R$ {m['val']:.0f}</span><br>
-                        <small style="color: #666;">Taxa GS: R$ {taxa:.2f}</small>
-                    </div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        c1, c2 = st.columns([3, 1])
-        with c1:
-            if st.button(f"ACEITAR PEDIDO #{m['id']}", key=f"aceita_{m['id']}", use_container_width=True):
-                if st.session_state.saldo >= taxa:
-                    st.session_state.saldo -= taxa
-                    st.success("Você aceitou! O cliente foi avisado.")
-                    st.balloons()
-                else:
-                    st.error("Sem saldo! Faça uma recarga para aceitar.")
-        with c2:
-            st.link_button("🗺️ Rota", f"https://www.google.com/maps/search/{m['loc']}+Osasco", use_container_width=True)
-
-# --- MODO EMPRESA ---
+# --- MODO EMPRESA (COM BOTÃO DE SUBMIT) ---
 else:
-    st.title("🏢 Lançar Nova Solicitação")
-    with st.form("post_job"):
-        col1, col2 = st.columns(2)
-        with col1:
-            cat = st.selectbox("Categoria", categorias[1:])
-            job = st.text_input("O que precisa ser feito?")
-            val = st.number_input("Valor oferecido (R$)", min_value=1.0)
-        with col2:
-            loc = st.text_input("Endereço/Bairro (Osasco)")
-            pay = st.radio("Pagamento para o Prestador:", ["PIX", "Cartão (Máquina)", "Dinheiro"])
+    st.title("🏢 Painel de Gestão")
+    with st.form("form_novo"):
+        st.write("### Abrir Nova O.S.")
+        job = st.text_input("Serviço")
+        loc = st.text_input("Bairro")
+        val = st.number_input("Valor", min_value=1.0)
         
-        if st.form_submit_button("LANÇAR NO RADAR 🚀"):
-            st.session_state.missoes.append({
-                "id": int(time.time()), "cat": cat, "job": job, 
-                "loc": loc, "val": val, "pay": pay, "dist": "~1.5 km"
-            })
-            st.success("Missão publicada!")
-            st.rerun()
-         
+        # O botão obrigatório do formulário
+        enviar = st.form_submit_button("LANÇAR NO RADAR")
+        
+        if enviar:
+            if job and loc:
+                st.session_state.missoes.append({
+                    "id": int(time.time()), "job": job, "loc": loc, "val": val
+                })
+                st.success("Lançado com sucesso!")
+                time.sleep(1)
+                st.rerun()
+                
