@@ -1,54 +1,42 @@
 import streamlit as st
 import time
+import pandas as pd
 
-# 1. CONFIGURAÇÃO E ESTILO (VERDE CLARO E DESIGN LIMPO)
-st.set_page_config(page_title="GS Radar Pro", page_icon="🚀", layout="wide")
+# 1. CONFIGURAÇÃO E ESTILO AVANÇADO
+st.set_page_config(page_title="GS Radar Super Pro", page_icon="🚀", layout="wide")
 
 st.markdown("""
     <style>
-    /* Fundo Verde Claro Suave */
-    .stApp { 
-        background-color: #E8F5E9 !important; 
-    }
-    
+    .stApp { background-color: #E8F5E9 !important; }
     .wallet-box {
         background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
         color: white; padding: 20px; border-radius: 15px; text-align: center;
-        margin-bottom: 20px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
     }
-    
-    .profile-box {
-        background: white; padding: 15px; border-radius: 15px;
-        border: 1px solid #C8E6C9; margin-bottom: 20px;
-    }
-    
     .status-card {
         background-color: white; padding: 20px; border-radius: 15px;
         border-left: 6px solid #2E7D32; margin-bottom: 20px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.08); position: relative;
     }
-    
-    .verified-badge {
-        color: #1E88E5; font-weight: bold; font-size: 11px;
-        background: #E3F2FD; padding: 4px 8px; border-radius: 10px;
+    .urgent-card {
+        border: 2px solid #FFD700 !important;
+        background-color: #FFFDF0 !important;
+        box-shadow: 0px 0px 15px rgba(255, 215, 0, 0.4) !important;
     }
-    
-    .stars { color: #FFB300; font-weight: bold; }
-    .price-tag { color: #2E7D32; font-size: 26px; font-weight: bold; }
+    .urgent-label {
+        background: #FFD700; color: #000; font-size: 10px; font-weight: bold;
+        padding: 2px 10px; border-radius: 5px; position: absolute; top: 10px; right: 10px;
+    }
+    .verified-badge { color: #1E88E5; font-weight: bold; font-size: 11px; background: #E3F2FD; padding: 4px 8px; border-radius: 10px; }
+    .price-tag { color: #2E7D32; font-size: 24px; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. INICIALIZAÇÃO DE DADOS (SIMULANDO UM PERFIL LOGADO)
+# 2. INICIALIZAÇÃO DE DADOS
 if 'logado' not in st.session_state: st.session_state.logado = False
-if 'saldo' not in st.session_state: st.session_state.saldo = 50.00  
+if 'saldo' not in st.session_state: st.session_state.saldo = 100.00
 if 'missoes' not in st.session_state: st.session_state.missoes = []
-if 'user_data' not in st.session_state:
-    st.session_state.user_data = {
-        "nome": "Antônio Silva",
-        "cpf": "123.***.***-00",
-        "estrelas": 4.9,
-        "corridas": 32
-    }
+if 'historico' not in st.session_state: st.session_state.historico = []
 
 # --- 3. LOGIN ---
 if not st.session_state.logado:
@@ -61,104 +49,84 @@ if not st.session_state.logado:
             st.rerun()
     st.stop()
 
-# --- 4. BARRA LATERAL (MENU E PERFIL) ---
+# --- 4. BARRA LATERAL MULTIFUNÇÕES ---
 with st.sidebar:
-    # Foto e Perfil na Barra Lateral
-    st.markdown(f"""
-        <div class="profile-box">
-            <small style="color: #666;">BEM-VINDO,</small><br>
-            <b>{st.session_state.user_data['nome']}</b><br>
-            <span class="stars">⭐ {st.session_state.user_data['estrelas']}</span> | 
-            <small>🏃 {st.session_state.user_data['corridas']} serviços</small>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="wallet-box"><small>SALDO DISPONÍVEL</small><br><span style="font-size: 28px;">R$ {st.session_state.saldo:.2f}</span></div>', unsafe_allow_html=True)
     
-    st.markdown(f'<div class="wallet-box"><small>SALDO GS</small><br><span style="font-size: 28px;">R$ {st.session_state.saldo:.2f}</span></div>', unsafe_allow_html=True)
-    
-    modo = st.radio("Selecione o Painel:", ["🚀 Radar de Serviços", "🏢 Painel da Empresa"])
+    menu = st.selectbox("Navegação", ["🚀 Radar de Missões", "🏢 Painel da Empresa", "📊 Meus Ganhos", "🏆 Ranking GS", "🔗 Indique e Ganhe"])
     
     st.divider()
-    if st.button("Sair da Conta"):
+    with st.expander("💳 Recarregar"):
+        v_rec = st.number_input("Valor", min_value=10.0)
+        if st.button("Gerar Pix"): st.image("https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=GS")
+    
+    if st.button("Sair"):
         st.session_state.logado = False
         st.rerun()
 
-# --- 5. MODO RADAR (O QUE O PRESTADOR VÊ) ---
-if modo == "🚀 Radar de Serviços":
-    st.title("📲 Radar GS - Osasco")
+# --- 5. MODO RADAR (PRESTADOR) ---
+if menu == "🚀 Radar de Missões":
+    st.title("📲 Radar em Tempo Real")
     
-    categorias = ["🧹 Zeladoria", "🚰 Encanador", "🔨 Marcenaria", "🛠️ Montador", "💅 Beleza", "🏠 Diarista", "🏥 Saúde", "🌳 Jardinagem"]
-    tabs = st.tabs(categorias)
+    tabs = st.tabs(["🧹 Zeladoria", "🛠️ Reparos", "💅 Beleza", "🏠 Diarista", "🏥 Saúde"])
     
     for i, tab in enumerate(tabs):
         with tab:
-            nome_cat = categorias[i].split(" ")[1]
-            servicos_filtro = [m for m in st.session_state.missoes if m['cat'] == nome_cat]
+            # Categorias mapeadas
+            cat_map = ["Zeladoria", "Reparos", "Beleza", "Diarista", "Saúde"]
+            servicos = [m for m in st.session_state.missoes if m['cat'] == cat_map[i]]
             
-            if not servicos_filtro:
-                st.info(f"Nenhum pedido de {nome_cat} aguardando...")
+            if not servicos:
+                st.info("Buscando novos sinais no radar...")
             else:
-                for idx, m in enumerate(servicos_filtro):
-                    selo = '<span class="verified-badge">✅ CONTA VERIFICADA</span>' if m['cpf'] else ''
+                for idx, m in enumerate(servicos):
+                    urgent_class = "urgent-card" if m['urgente'] else ""
                     st.markdown(f"""
-                    <div class="status-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 13px; color: #555;"><b>Empresa:</b> {m['empresa']}</span>
-                            {selo}
+                    <div class="status-card {urgent_class}">
+                        {f'<div class="urgent-label">⚡ URGENTE</div>' if m['urgente'] else ''}
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size:12px;"><b>{m['empresa']}</b></span>
+                            { '<span class="verified-badge">✅ VERIFICADA</span>' if m['cpf'] else '' }
                         </div>
-                        <div style="font-size: 12px; color: #888;">👤 Responsável: {m['nome_resp']}</div>
-                        <hr style="margin: 10px 0; border: 0; border-top: 1px solid #eee;">
-                        <h2 style="margin:0; font-size: 22px;">{m['serv']}</h2>
-                        <p style="color:#444; margin: 5px 0;">📍 {m['loc']}</p>
+                        <h3 style="margin:5px 0;">{m['serv']}</h3>
+                        <p style="font-size:14px; color:#555;">📍 {m['loc']}</p>
                         <div class="price-tag">R$ {m['val']:.2f}</div>
-                        <p style="margin-top:10px;"><small>💳 {m['pag']} | 📝 {m['obs']}</small></p>
+                        <p><small>💰 {m['pag']} | 👤 {m['nome_resp']}</small></p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    if st.button("✅ ACEITAR E CHAMAR CORRIDA", key=f"ac_{nome_cat}_{idx}", use_container_width=True):
-                        st.success("Missão aceita! O cliente foi notificado.")
+                    c1, c2, c3 = st.columns(3)
+                    with c1: 
+                        if st.button("✅ ACEITAR", key=f"ac_{idx}_{i}"):
+                            st.session_state.historico.append(m)
+                            st.success("Missão aceita!")
+                    with c2: st.button("💬 CHAT", key=f"ch_{idx}_{i}")
+                    with c3: st.button("🗺️ MAPA", key=f"mp_{idx}_{i}")
 
 # --- 6. PAINEL DA EMPRESA ---
-else:
-    st.title("🏢 Gestão de Chamados")
-    
-    with st.form("form_os"):
-        st.subheader("Informações da Empresa")
-        c1, c2 = st.columns(2)
-        with c1:
-            empresa_nome = st.text_input("Nome da Empresa", value="GS Consultoria")
-            nome_usuario = st.text_input("Seu Nome")
-        with c2:
-            cpf_usuario = st.text_input("CPF (Para Verificação)")
-            cat_selecionada = st.selectbox("Tipo de Serviço", ["Zeladoria", "Encanador", "Marcenaria", "Montador", "Beleza", "Diarista", "Saúde", "Jardinagem"])
+elif menu == "🏢 Painel da Empresa":
+    st.title("🏢 Lançar Serviço")
+    with st.form("new_os"):
+        col1, col2 = st.columns(2)
+        with col1:
+            emp = st.text_input("Empresa", value="GS Consultoria")
+            resp = st.text_input("Responsável")
+            cpf = st.text_input("CPF (Selo Verificado)")
+        with col2:
+            cat = st.selectbox("Categoria", ["Zeladoria", "Reparos", "Beleza", "Diarista", "Saúde"])
+            valor = st.number_input("Valor ao Prestador", min_value=1.0)
+            pag = st.selectbox("Pagamento", ["Pix", "Máquina", "Dinheiro"])
         
-        st.divider()
-        st.subheader("Detalhes da Solicitação")
-        servico_txt = st.text_input("Descrição do que precisa")
-        bairro_txt = st.text_input("Endereço / Bairro")
+        serv = st.text_input("Descrição do Serviço")
+        loc = st.text_input("Localização")
+        urgente = st.checkbox("⚡ IMPULSIONAR (URGENTE) - Custo: R$ 5,00")
         
-        cv, cp = st.columns(2)
-        with cv: valor_serv = st.number_input("Valor ao Prestador (R$)", min_value=1.0, value=70.0)
-        with cp: pag_tipo = st.selectbox("Meio de Pagamento", ["Pix", "Máquina", "Dinheiro"])
-            
-        obs_txt = st.text_area("Observações importantes")
+        taxa = (valor * 0.07) + (5.0 if urgente else 0)
+        st.warning(f"Total de taxas para publicação: R$ {taxa:.2f}")
         
-        taxa = valor_serv * 0.07
-        st.warning(f"Será descontado **R$ {taxa:.2f}** (7%) do seu saldo para publicar.")
-        
-        if st.form_submit_button("🚀 PUBLICAR NO RADAR"):
-            if not (nome_usuario and servico_txt):
-                st.error("Campos obrigatórios faltando!")
-            elif st.session_state.saldo < taxa:
-                st.error("Saldo insuficiente para cobrir a taxa de 7%.")
-            else:
+        if st.form_submit_button("🚀 LANÇAR NO RADAR"):
+            if st.session_state.saldo >= taxa:
                 st.session_state.saldo -= taxa
                 st.session_state.missoes.append({
-                    "empresa": empresa_nome, "nome_resp": nome_usuario, "cpf": cpf_usuario,
-                    "cat": cat_selecionada, "serv": servico_txt, "loc": bairro_txt, 
-                    "val": valor_serv, "pag": pag_tipo, "obs": obs_txt
-                })
-                st.balloons()
-                st.success("Chamado enviado para o Radar!")
-                time.sleep(1)
-                st.rerun()
-                
+                    "empresa": emp, "nome_resp": resp, "cpf": cpf, "
+    
