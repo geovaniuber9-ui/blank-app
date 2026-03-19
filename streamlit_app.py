@@ -1,9 +1,9 @@
 import streamlit as st
 
 # 1. CONFIGURAÇÃO
-st.set_page_config(page_title="GS Consultoria - Radar", page_icon="🌱", layout="wide")
+st.set_page_config(page_title="GS Consultoria - Radar Pro", page_icon="🌱", layout="wide")
 
-# ESTILO VISUAL (Verde Claro e Cards)
+# ESTILO VISUAL MELHORADO
 st.markdown("""
     <style>
     .stApp { background-color: #F0F9F1 !important; }
@@ -12,20 +12,17 @@ st.markdown("""
         border-left: 5px solid #2E7D32; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
         margin-bottom: 15px; 
     }
-    .valor { color: #2E7D32; font-size: 24px; font-weight: bold; }
+    .valor { color: #2E7D32; font-size: 26px; font-weight: bold; }
+    .btn-maps { background-color: #4285F4; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. INICIALIZAÇÃO DO BANCO DE DADOS (SESSÃO)
+# 2. BANCO DE DADOS TEMPORÁRIO
 if 'missoes_ativas' not in st.session_state:
-    # Algumas missões iniciais para não vir vazio
-    st.session_state.missoes_ativas = [
-        {"empresa": "Prefeitura", "categoria": "Zeladoria", "servico": "Varrição de Vias", "local": "Centro", "valor": 55.0},
-        {"empresa": "GS Consultoria", "categoria": "Zeladoria", "servico": "Pintura de Meio-Fio", "local": "Bela Vista", "valor": 85.0}
-    ]
+    st.session_state.missoes_ativas = []
 if 'logado' not in st.session_state: st.session_state.logado = False
 
-# --- LOGIN ---
+# LOGIN 1/1
 if not st.session_state.logado:
     st.title("GS Consultoria 🌱")
     u = st.text_input("Usuário")
@@ -38,60 +35,85 @@ if not st.session_state.logado:
 
 # SIDEBAR
 with st.sidebar:
-    st.write(f"👤 **Geovani Santi**")
-    modo = st.radio("MODO:", ["🚀 Prestador", "🏢 Empresa"])
-    if st.button("SAIR"):
+    st.write(f"👤 **Operador:** Geovani Santi")
+    modo = st.radio("ESCOLHA O MODO:", ["🚀 Prestador (Executar)", "🏢 Empresa (Gerenciar)"])
+    if st.button("SAIR DO SISTEMA"):
         st.session_state.logado = False
         st.rerun()
 
-# --- MODO EMPRESA (ONDE LANÇA A MISSÃO) ---
-if modo == "🏢 Empresa":
-    st.title("🏢 Gestão de Contratação")
+# --- MODO EMPRESA (GERENCIAR E EXCLUIR) ---
+if modo == "🏢 Empresa (Gerenciar)":
+    st.title("🏢 Painel de Controle")
     
-    with st.form("nova_os"):
-        st.subheader("📝 Abrir Nova O.S.")
-        emp = st.text_input("Nome da sua Empresa", value="GS Consultoria")
-        cat = st.selectbox("Categoria", ["Zeladoria", "Saúde", "Resíduos", "Jardinagem"])
-        serv = st.text_input("Serviço Específico (ex: Varrição)")
-        loc = st.text_input("Localização (Bairro)")
-        val = st.number_input("Valor (R$)", min_value=10.0)
-        
-        if st.form_submit_button("LANÇAR NO RADAR"):
-            if serv and loc:
-                # ADICIONA NA LISTA GLOBAL
-                nova_missao = {"empresa": emp, "categoria": cat, "servico": serv, "local": loc, "valor": val}
-                st.session_state.missoes_ativas.append(nova_missao)
-                st.success(f"Missão de {serv} lançada em {cat}!")
-            else:
-                st.error("Preencha o serviço e o local!")
+    with st.expander("➕ LANÇAR NOVA MISSÃO NO RADAR", expanded=True):
+        with st.form("nova_os"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                emp = st.text_input("Sua Empresa", value="GS Consultoria")
+                cat = st.selectbox("Categoria", ["Zeladoria", "Saúde", "Resíduos", "Jardinagem"])
+            with col_b:
+                serv = st.text_input("O que fazer? (Serviço)")
+                loc = st.text_input("Onde? (Bairro/Rua)")
+            val = st.number_input("Valor do Pagamento (R$)", min_value=1.0)
+            
+            if st.form_submit_button("PUBLICAR NO RADAR"):
+                if serv and loc:
+                    st.session_state.missoes_ativas.append({
+                        "id": len(st.session_state.missoes_ativas),
+                        "empresa": emp, "categoria": cat, "servico": serv, "local": loc, "valor": val
+                    })
+                    st.success("Missão publicada!")
+                    st.rerun()
 
-# --- MODO PRESTADOR (ONDE APARECE A MISSÃO) ---
+    st.subheader("📋 Missões Atuais no Radar")
+    if not st.session_state.missoes_ativas:
+        st.info("Nenhuma missão ativa.")
+    else:
+        for i, m in enumerate(st.session_state.missoes_ativas):
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.write(f"**[{m['categoria']}]** {m['servico']} - {m['local']} (R$ {m['valor']})")
+            with col2:
+                if st.button("❌ Excluir", key=f"del_{i}"):
+                    st.session_state.missoes_ativas.pop(i)
+                    st.rerun()
+
+# --- MODO PRESTADOR (EXECUTAR, MAPS E FOTO) ---
 else:
-    st.title("🌱 Radar GS - Osasco")
-    
-    # Criamos as abas
+    st.title("🚀 Radar GS - Osasco")
     categorias = ["Zeladoria", "Saúde", "Resíduos", "Jardinagem"]
-    tabs = st.tabs([f"🧹 Zeladoria", "🏥 Saúde", "♻️ Resíduos", "🌳 Jardinagem"])
+    tabs = st.tabs([f"🧹 {c}" if c=="Zeladoria" else f"🌳 {c}" if c=="Jardinagem" else c for c in categorias])
 
     for i, cat_nome in enumerate(categorias):
         with tabs[i]:
-            # Filtra as missões que pertencem a esta categoria
-            missoes_da_aba = [m for m in st.session_state.missoes_ativas if m['categoria'] == cat_nome]
+            missoes = [m for m in st.session_state.missoes_ativas if m['categoria'] == cat_nome]
             
-            if not missoes_da_aba:
-                st.info(f"Nenhuma missão de {cat_nome} disponível no momento.")
+            if not missoes:
+                st.info(f"Sem missões de {cat_nome} agora.")
             else:
-                for idx, m in enumerate(missoes_da_aba):
-                    st.markdown(f"""
-                        <div class="card">
-                            <small>{m['empresa']} chamando...</small>
-                            <h3>{m['servico']}</h3>
-                            <p>📍 Local: {m['local']}</p>
-                            <div class="valor">R$ {m['valor']:.2f}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(f"ACEITAR: {m['servico']} #{idx}", key=f"btn_{cat_nome}_{idx}"):
-                        st.success(f"Você aceitou: {m['servico']}!")
-                        # Opcional: remover da lista após aceitar
-                        # st.session_state.missoes_ativas.remove(m)
-                
+                for idx, m in enumerate(missoes):
+                    with st.container():
+                        st.markdown(f"""
+                            <div class="card">
+                                <small>Contratante: {m['empresa']}</small>
+                                <h3>{m['servico']}</h3>
+                                <p>📍 {m['local']}</p>
+                                <div class="valor">R$ {m['valor']:.2f}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        c1, c2, c3 = st.columns([1, 1, 1])
+                        with c1:
+                            # LINK PARA O GOOGLE MAPS
+                            url_maps = f"https://www.google.com/maps/search/?api=1&query={m['local']}+Osasco"
+                            st.markdown(f'<a href="{url_maps}" target="_blank" class="btn-maps">🗺️ Ver no Mapa</a>', unsafe_allow_html=True)
+                        
+                        with c2:
+                            # CAMPO PARA FOTO
+                            st.file_uploader("📸 Foto da Conclusão", type=['png', 'jpg'], key=f"foto_{m['id']}")
+                        
+                        with c3:
+                            if st.button("✅ Finalizar", key=f"fin_{m['id']}"):
+                                st.balloons()
+                                st.success("Missão Concluída!")
+                                
