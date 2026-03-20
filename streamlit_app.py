@@ -5,10 +5,10 @@ import random
 # --- 1. CONFIGURAÇÃO E ESTILO ---
 st.set_page_config(page_title="GS Radar Master", page_icon="🚀", layout="wide")
 
-# CSS Estilizado
+# Estilos CSS Globais
 st.markdown("""
     <style>
-    .stApp { background-color: #F0F2F0; }
+    .stApp { background-color: #F4F7F4; }
     
     .wallet-box {
         background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
@@ -16,39 +16,30 @@ st.markdown("""
         margin-bottom: 20px; box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
     }
     
-    .status-card {
-        background-color: white; padding: 20px; border-radius: 15px;
-        border-left: 6px solid #2E7D32; margin-bottom: 10px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.08); position: relative;
+    /* Card de Serviço */
+    .service-card {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 8px solid #2E7D32;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 5px;
     }
-
-    .urgent-card {
-        border: 2px solid #FFD700 !important;
-        background-color: #FFFDF0 !important;
-    }
-
-    .urgent-label {
-        background: #FFD700; color: #000; font-size: 10px; font-weight: bold;
-        padding: 2px 10px; border-radius: 5px; position: absolute; top: 10px; right: 10px;
-    }
-
-    .distance-tag { color: #666; font-size: 13px; font-weight: bold; }
-    .price-tag { color: #2E7D32; font-size: 24px; font-weight: bold; margin-top: 10px; }
     
-    .stButton button { width: 100%; border-radius: 10px; height: 3em; font-weight: bold; }
+    .urgent-border { border-left: 8px solid #FFD700 !important; background-color: #FFFDF0; }
+    
+    .price { color: #2E7D32; font-size: 22px; font-weight: bold; }
+    .dist { color: #666; font-size: 14px; font-weight: bold; }
+    .verified { color: #1E88E5; font-size: 12px; font-weight: bold; background: #E3F2FD; padding: 2px 6px; border-radius: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INICIALIZAÇÃO ---
+# --- 2. ESTADOS ---
 if 'logado' not in st.session_state: st.session_state.logado = False
 if 'saldo' not in st.session_state: st.session_state.saldo = 50.00
 if 'missoes' not in st.session_state: 
     st.session_state.missoes = [
-        {
-            "id": 3790, "empresa": "GS Consultoria", "nome_resp": "Antonia", 
-            "cat": "Beleza", "serv": "Pé e Mão", "loc": "Rua Emília Pilon, 47 - Osasco", 
-            "val": 100.0, "urgente": True, "km": 6.4
-        }
+        {"id": 3790, "emp": "GS Consultoria", "resp": "Antonia", "cat": "Beleza", "serv": "Pé e Mão", "loc": "Rua Emília Pilon, 47 - Osasco", "val": 120.0, "urg": True, "km": 1.2}
     ]
 if 'missao_ativa' not in st.session_state: st.session_state.missao_ativa = None
 if 'historico' not in st.session_state: st.session_state.historico = []
@@ -61,34 +52,34 @@ if not st.session_state.logado:
         st.rerun()
     st.stop()
 
-# --- 4. MENU LATERAL ---
+# --- 4. SIDEBAR ---
 with st.sidebar:
-    st.markdown(f'<div class="wallet-box"><small>SALDO</small><br><span style="font-size: 28px;">R$ {st.session_state.saldo:.2f}</span></div>', unsafe_allow_html=True)
-    menu = st.radio("Menu:", ["🚀 Radar", "🏢 Lançar", "📊 Ganhos"])
-    if st.button("Sair"):
+    st.markdown(f'<div class="wallet-box"><small>SALDO GS</small><br><span style="font-size: 26px;">R$ {st.session_state.saldo:.2f}</span></div>', unsafe_allow_html=True)
+    aba = st.radio("Menu:", ["🚀 Radar", "🏢 Empresa", "📊 Ganhos"])
+    if st.button("Logout"):
         st.session_state.logado = False
         st.rerun()
 
 # --- 5. TELAS ---
 
-if menu == "🚀 Radar":
+if aba == "🚀 Radar":
     if st.session_state.missao_ativa:
         m = st.session_state.missao_ativa
-        st.subheader("🛠️ Missão Ativa")
-        st.info(f"📍 Destino: {m['loc']}")
+        st.title("🏃 Missão em Andamento")
+        st.warning(f"Destino: {m['loc']}")
         
-        # GPS Link
-        maps_url = f"https://www.google.com/maps/search/?api=1&query={m['loc'].replace(' ', '+')}"
-        st.link_button("🗺️ ABRIR GPS (INICIAR ROTA)", maps_url, type="primary")
+        url_maps = f"https://www.google.com/maps/search/?api=1&query={m['loc'].replace(' ', '+')}"
+        st.link_button("📍 ABRIR GPS AGORA", url_maps, type="primary", use_container_width=True)
         
         st.divider()
-        with st.expander("Finalizar Serviço", expanded=True):
-            st.file_uploader("Foto do trabalho", type=['jpg', 'png'])
-            if st.button("CONCLUIR E RECEBER"):
+        with st.container(border=True):
+            st.subheader("Concluir Serviço")
+            st.file_uploader("Foto da conclusão")
+            if st.button("FINALIZAR E RECEBER", use_container_width=True):
                 st.session_state.saldo += m['val']
                 st.session_state.historico.append(m)
                 st.session_state.missao_ativa = None
-                st.success("Recebido!")
+                st.success("Saldo creditado!")
                 st.rerun()
         
         if st.button("Cancelar"):
@@ -106,56 +97,67 @@ if menu == "🚀 Radar":
                 vagas = [v for v in st.session_state.missoes if v['cat'] == cat_nome]
                 
                 if not vagas:
-                    st.info("Buscando novas missões...")
+                    st.info(f"Sem pedidos de {cat_nome} no momento.")
                 else:
                     for v in vagas:
-                        # A MÁGICA PARA NÃO APARECER O CÓDIGO:
-                        u_style = "urgent-card" if v['urgente'] else ""
+                        # RENDERIZAÇÃO LIMPA E SEM ERRO
+                        urg_class = "urgent-border" if v['urg'] else ""
                         
-                        # Criamos o container visual PRIMEIRO
-                        container = st.container()
-                        with container:
-                            # Renderizamos o HTML dentro do container
-                            st.markdown(f"""
-                            <div class="status-card {u_style}">
-                                {f'<div class="urgent-label">⚡ URGENTE</div>' if v['urgente'] else ''}
-                                <div style="display: flex; justify-content: space-between;">
-                                    <b style="color: #1B5E20;">{v['empresa']}</b>
-                                    <span class="distance-tag">📍 {v['km']} km</span>
-                                </div>
-                                <h2 style="margin: 5px 0; font-size: 20px;">{v['serv']}</h2>
-                                <p style="color: #666; font-size: 14px;">{v['loc']}</p>
-                                <div class="price-tag">R$ {v['val']:.2f}</div>
+                        # Bloco HTML Puro para o Card
+                        st.markdown(f"""
+                        <div class="service-card {urg_class}">
+                            <div style="display: flex; justify-content: space-between;">
+                                <b>{v['emp']}</b>
+                                <span class="dist">📍 {v['km']} km</span>
                             </div>
-                            """, unsafe_allow_html=True)
-                            
-                            # O botão fica logo abaixo, mas fora do bloco de texto HTML
-                            if st.button(f"ACEITAR MISSÃO #{v['id']}", key=f"btn_{v['id']}"):
-                                st.session_state.missao_ativa = v
-                                st.session_state.missoes = [x for x in st.session_state.missoes if x['id'] != v['id']]
-                                st.rerun()
+                            <h2 style="margin: 10px 0; color: #333;">{v['serv']}</h2>
+                            <p style="color: #666; margin-bottom: 10px;">🏠 {v['loc']} | 👤 {v['resp']}</p>
+                            <span class="price">R$ {v['val']:.2f}</span>
+                            { '<br><span class="verified">✅ VERIFICADA</span>' if v['id'] else '' }
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # O segredo: o botão de aceitar logo abaixo, com chave única
+                        if st.button(f"ACEITAR ESTA MISSÃO (#{v['id']})", key=f"btn_{v['id']}", use_container_width=True):
+                            st.session_state.missao_ativa = v
+                            st.session_state.missoes = [x for x in st.session_state.missoes if x['id'] != v['id']]
+                            st.rerun()
 
-elif menu == "🏢 Lançar":
+elif aba == "🏢 Empresa":
     st.title("🏢 Lançar Serviço")
     with st.form("lancar"):
-        emp = st.text_input("Empresa", "GS Consultoria")
-        serv = st.text_input("Serviço")
-        end = st.text_input("Endereço")
-        cat = st.selectbox("Categoria", ["Zeladoria", "Encanador", "Montador", "Beleza"])
-        val = st.number_input("Valor", value=100.0)
-        urg = st.checkbox("Impulsionar")
+        c1, c2 = st.columns(2)
+        with c1:
+            emp = st.text_input("Sua Empresa/Nome", "GS Consultoria")
+            serv = st.text_input("O que precisa ser feito?")
+        with c2:
+            cat = st.selectbox("Categoria", ["Zeladoria", "Encanador", "Montador", "Beleza"])
+            val = st.number_input("Valor para o prestador", value=80.0)
         
-        if st.form_submit_button("Publicar"):
-            nova = {
-                "id": random.randint(1000, 9999),
-                "empresa": emp, "cat": cat, "serv": serv, 
-                "loc": end, "val": val, "urgente": urg, "km": 5.0
-            }
-            st.session_state.missoes.append(nova)
-            st.success("Publicado!")
+        loc = st.text_input("Endereço em Osasco/Região")
+        urg = st.checkbox("Impulsionar (Destaque)")
+        
+        if st.form_submit_button("PUBLICAR NO RADAR"):
+            taxa = 5.0 if urg else 2.0
+            if st.session_state.saldo >= taxa:
+                st.session_state.saldo -= taxa
+                nova = {
+                    "id": random.randint(1000, 9999), "emp": emp, "resp": "User",
+                    "cat": cat, "serv": serv, "loc": loc, "val": val, "urg": urg,
+                    "km": round(random.uniform(0.5, 10.0), 1)
+                }
+                st.session_state.missoes.append(nova)
+                st.success("Publicado com sucesso!")
+                st.rerun()
+            else:
+                st.error("Saldo insuficiente para a taxa.")
 
-elif menu == "📊 Ganhos":
-    st.title("📊 Meus Ganhos")
+elif aba == "📊 Ganhos":
+    st.title("📊 Extrato")
     if st.session_state.historico:
-        st.table(pd.DataFrame(st.session_state.historico)[['serv', 'val']])
-        
+        df = pd.DataFrame(st.session_state.historico)
+        st.metric("Total Ganho", f"R$ {df['val'].sum():.2f}")
+        st.dataframe(df[['serv', 'val', 'loc']], use_container_width=True)
+    else:
+        st.info("Trabalhe para ver seus ganhos aqui!")
+                
